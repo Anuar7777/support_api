@@ -4,7 +4,7 @@ from db import get_db_connection
 from psycopg2.extras import RealDictCursor
 import re
 
-def find_similar_logic(input_vector, text):
+def find_similar_logic(input_vector, text, created_by):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -33,14 +33,12 @@ def find_similar_logic(input_vector, text):
                 "query": text,
             }
 
-        # Получение вопросов и их векторов
         cursor.execute("SELECT question_id, question, question_vector, answer_id FROM questions")
         questions = cursor.fetchall()
 
         if not questions:
             raise HTTPException(status_code=404, detail="Нет данных в таблице вопросов.")
 
-        # Поиск всех похожих вопросов
         top_match = None
         max_similarity = 0
 
@@ -54,7 +52,6 @@ def find_similar_logic(input_vector, text):
         if not top_match:
             raise HTTPException(status_code=404, detail="Нет похожих вопросов.")
 
-        # Извлечение ответа из таблицы answers
         cursor.execute("SELECT answer FROM answers WHERE answer_id = %s", (top_match['answer_id'],))
         answer_row = cursor.fetchone()
 
@@ -62,10 +59,16 @@ def find_similar_logic(input_vector, text):
             raise HTTPException(status_code=404, detail="Ответ для данного вопроса не найден.")
 
         if max_similarity < 0.75:
+            cursor.execute("""
+                INSERT INTO queries (query, created_by, support_answer, pred_question, similarity, created_at)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (text, created_by, answer_row['answer'], top_match['question'], float(round(max_similarity, 2))))
+            conn.commit()
+
             return {
                 "question": top_match['question'],
                 "similarity": max_similarity,
-                "answer": "Ваш запрос перенаправлен на оператора",
+                "answer": "Ваш запрос перенаправлен на оператора. Пожалуйста, ожидайте ответа.",
                 "query": text,
             }
 

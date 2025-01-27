@@ -4,8 +4,8 @@ from logic import find_similar_logic
 
 API_URL = "https://cablyai.com/v1/chat/completions"
 
-def find_similar_pro_logic(input_vector, text):
-    result = find_similar_logic(input_vector, text)
+def find_similar_pro_logic(input_vector, text, created_by):
+    result = find_similar_logic(input_vector, text, created_by)
     
     prompt = (
         f"Вы опытный оператор технической поддержки Platonus - Платон."
