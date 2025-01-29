@@ -20,19 +20,22 @@ class LocalhostOnlyMiddleware(BaseHTTPMiddleware):
 model = SentenceTransformer('all-MiniLM-L6-v2')
 app = FastAPI()
 
-class TextRequest(BaseModel):
+class BaseTextRequest(BaseModel):
+    text: str
+
+class ComplexTextRequest(BaseModel):
     text: str
     created_by: str
 
 @app.post("/vectorize/")
-async def vectorize(request: TextRequest):
+async def vectorize(request: BaseTextRequest):
     text = request.text
     vector = model.encode(text)
 
     return {"vector": vector.tolist()}
 
 @app.post("/find_similar/")
-async def find_similar(request: TextRequest):
+async def find_similar(request: ComplexTextRequest):
     text = request.text
     created_by = request.created_by
     input_vector = model.encode(text)
@@ -41,7 +44,7 @@ async def find_similar(request: TextRequest):
     return result
 
 @app.post("/find_similar_pro/")
-async def find_similar_pro(request: TextRequest):
+async def find_similar_pro(request: ComplexTextRequest):
     text = request.text
     created_by = request.created_by
     input_vector = model.encode(text)

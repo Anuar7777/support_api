@@ -41,3 +41,5 @@ def find_similar_pro_logic(input_vector, text, created_by):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при обращении к OpenAI API: {e}")
+
+
